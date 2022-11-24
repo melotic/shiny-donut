@@ -40,7 +40,7 @@ pub fn start_capture(
 
     // ignore shiny-donut traffic
     device.filter(
-        &format!("not port {} and not port 22 and not port 22", port),
+        &format!("not port {} and not port 22 and not port 443", port),
         true,
     )?;
 
