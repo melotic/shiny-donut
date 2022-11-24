@@ -3,11 +3,14 @@ use color_eyre::{eyre::Context, Help};
 use reqwest::{Client, ClientBuilder};
 use tokio::fs::File;
 use tokio::time::{self, Duration};
+use tracing::info;
 
 use crate::capture;
 use crate::cli::{DeviceOption, Security};
 
 async fn test_connection(url: &str, client: &Client) -> Result<()> {
+    info!("Testing server connection {}", url);
+    
     client
         .get(url)
         .send()
@@ -46,11 +49,18 @@ pub async fn client(
     loop {
         time::sleep(Duration::from_secs(15)).await;
 
+        let file = File::open(&pcap_path).await?;
+
+        info!(
+            "Sending traffic size: {file_size}",
+            file_size = file.metadata().await?.len()
+        );
+
         // Send post request with pcap
         client
             .post(&api_url)
             .basic_auth(&security.password, Option::<&str>::None)
-            .body(File::open(&pcap_path).await?)
+            .body(file)
             .send()
             .await?;
     }

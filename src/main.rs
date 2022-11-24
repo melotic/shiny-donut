@@ -27,8 +27,10 @@ fn list_devices() -> Result<()> {
 async fn main() -> Result<()> {
     // start capturing packets
     let args = Args::parse();
+
     tracing_subscriber::fmt::init();
     color_eyre::install()?;
+    
     match args.mode {
         cli::Mode::Server {
             port,
