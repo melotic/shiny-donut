@@ -66,6 +66,7 @@ pub async fn server(port: u16, device: DeviceOption, security: Security) -> Resu
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
+            .wrap(middleware::Compress::default())
             .service(index)
             .app_data(Data::new(security.clone()))
             .app_data(Data::new(device.clone()))

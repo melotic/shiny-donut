@@ -4,6 +4,7 @@ use pcap::Device;
 
 mod capture;
 mod cli;
+mod client;
 mod server;
 
 const SHINY_DONUT_LOGO: &str = include_str!("../static/logo.txt");
@@ -37,8 +38,9 @@ async fn main() -> Result<()> {
         cli::Mode::Client {
             host,
             port,
+            device,
             security,
-        } => todo!(),
+        } => crate::client::client(host, port, device, security).await?,
         cli::Mode::Listen {
             port,
             address,

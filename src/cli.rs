@@ -23,6 +23,10 @@ pub(crate) enum Mode {
         /// The port to connect to
         port: u16,
 
+        /// The device to use to capture packets
+        #[command(flatten)]
+        device: DeviceOption,
+
         #[command(flatten)]
         security: Security,
     },
