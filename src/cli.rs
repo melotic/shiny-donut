@@ -47,7 +47,7 @@ pub(crate) enum Mode {
     ListDevices,
 }
 
-#[derive(Parser, PartialEq)]
+#[derive(Parser, PartialEq, Clone)]
 pub struct DeviceOption {
     /// The device to use to sniff packets
     pub interface: String,

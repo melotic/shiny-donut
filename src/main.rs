@@ -2,11 +2,11 @@ use clap::Parser;
 use color_eyre::Result;
 use pcap::Device;
 
-mod auth;
 mod capture;
 mod cli;
-mod networking;
 mod server;
+
+const SHINY_DONUT_LOGO: &str = include_str!("../static/logo.txt");
 
 #[derive(Parser)]
 #[clap(version, author, about)]
@@ -26,7 +26,8 @@ fn list_devices() -> Result<()> {
 async fn main() -> Result<()> {
     // start capturing packets
     let args = Args::parse();
-
+    tracing_subscriber::fmt::init();
+    color_eyre::install()?;
     match args.mode {
         cli::Mode::Server {
             port,

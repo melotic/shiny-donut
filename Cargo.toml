@@ -2,17 +2,23 @@
 name = "shiny-donut"
 version = "0.1.0"
 edition = "2021"
+authors = ["Justin Perez <justinmp215@gmail.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-aes-gcm = "0.10.1"
-argon2 = "0.4.1"
-bincode = "2.0.0-rc.2"
+actix-files = "0.6.2"
+actix-web = { version = "4.2.1", features = ["rustls", "actix-tls", "openssl"] }
+actix-web-httpauth = "0.8.0"
 clap = { version = "4.0.26", features = ["derive"] }
 color-eyre = "0.6.2"
 futures-util = "0.3.25"
+openssl = "0.10.42"
 pcap = { version = "1.0.0", features = ["capture-stream"] }
 pcap-async = "0.4.1"
-rand = "0.8.5"
 tokio = { version = "1.22.0", features = ["full"] }
+tracing = "0.1.37"
+tracing-subscriber = "0.3.16"
+
+[profile.release]
+strip = true

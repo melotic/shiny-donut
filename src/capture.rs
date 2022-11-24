@@ -5,6 +5,7 @@ use color_eyre::{
 use futures_util::StreamExt;
 use pcap::{self, Device, Packet, PacketCodec, PacketStream, Savefile};
 use std::{env::temp_dir, path::PathBuf};
+use tracing::{info, trace};
 
 use crate::capture::eyre::eyre;
 
@@ -35,12 +36,18 @@ pub fn start_capture(
         .open()?
         .setnonblock()?;
 
+    info!("Found device {}", interface);
+
     // ignore shiny-donut traffic
-    device.filter(&format!("not port {}", port), true)?;
+    device.filter(
+        &format!("not port {} and not port 22 and not port 22", port),
+        true,
+    )?;
 
     let pcap_file = get_pcap_path(&interface);
-    let save_file = device.savefile(pcap_file)?;
+    let save_file = device.savefile(&pcap_file)?;
 
+    info!("Saving traffic to {}", pcap_file.display());
     // Create a stream
     device
         .stream(SaveFilePacketCodec(save_file))
@@ -50,7 +57,7 @@ pub fn start_capture(
 pub async fn packet_listener(stream: PacketStream<pcap::Active, SaveFilePacketCodec>) {
     stream
         .for_each_concurrent(None, |_| async {
-            // idk
+            trace!("Received new data");
         })
         .await;
 }
