@@ -39,12 +39,9 @@ pub fn start_capture(
     info!("Found device {}", interface);
 
     // ignore shiny-donut traffic
-    device.filter(
-        &format!("not port {} and not port 22 and not port 443", port),
-        true,
-    )?;
+    device.filter(&format!("not port {}", port), true)?;
 
-    let pcap_file = get_pcap_path(&interface);
+    let pcap_file = get_pcap_path(interface);
     let save_file = device.savefile(&pcap_file)?;
 
     info!("Saving traffic to {}", pcap_file.display());

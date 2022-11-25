@@ -10,7 +10,7 @@ use crate::cli::{DeviceOption, Security};
 
 async fn test_connection(url: &str, client: &Client) -> Result<()> {
     info!("Testing server connection {}", url);
-    
+
     client
         .get(url)
         .send()
@@ -64,6 +64,4 @@ pub async fn client(
             .send()
             .await?;
     }
-
-    Ok(())
 }

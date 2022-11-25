@@ -2,9 +2,11 @@ use clap::Parser;
 use color_eyre::Result;
 use pcap::Device;
 
+mod auth;
 mod capture;
 mod cli;
 mod client;
+mod listen;
 mod server;
 
 const SHINY_DONUT_LOGO: &str = include_str!("../static/logo.txt");
@@ -30,7 +32,7 @@ async fn main() -> Result<()> {
 
     tracing_subscriber::fmt::init();
     color_eyre::install()?;
-    
+
     match args.mode {
         cli::Mode::Server {
             port,
@@ -46,9 +48,8 @@ async fn main() -> Result<()> {
         cli::Mode::Listen {
             port,
             address,
-            out,
             security,
-        } => todo!(),
+        } => crate::listen::listen(address, port, security).await?,
         cli::Mode::ListDevices => list_devices()?,
     }
 

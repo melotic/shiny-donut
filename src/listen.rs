@@ -1,22 +1,16 @@
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
-use crate::cli::{DeviceOption, Security};
-use crate::{auth, capture, SHINY_DONUT_LOGO};
-use actix_files::NamedFile;
 use actix_web::{
-    get, middleware,
-    web::{self, Data},
-    App, HttpResponse, HttpServer, Responder,
+    error, get, middleware,
+    web::{self, Data, PayloadConfig},
+    App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use actix_web_httpauth::middleware::HttpAuthentication;
 use color_eyre::{eyre::Context, Help, Result};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use tracing::info;
 
-async fn traffic(data: Data<Arc<DeviceOption>>) -> actix_web::Result<impl Responder> {
-    // send pcap from capture
-    Ok(NamedFile::open_async(capture::get_pcap_path(&data.interface)).await?)
-}
+use crate::{auth, cli::Security};
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -24,14 +18,27 @@ async fn index() -> impl Responder {
     HttpResponse::Ok().content_type("text/html").body(html)
 }
 
-pub async fn server(port: u16, device: DeviceOption, security: Security) -> Result<()> {
-    println!("{}", SHINY_DONUT_LOGO);
-    let device = Arc::new(device);
-    let security = Arc::new(security);
+async fn traffic(req: HttpRequest, pcap: web::Bytes) -> actix_web::Result<impl Responder> {
+    let peer_addr = req
+        .peer_addr()
+        .ok_or_else(|| error::ErrorInternalServerError("Couldnt get ip addr"))?;
 
-    let stream = capture::start_capture(&device.interface, port)?;
-    tokio::spawn(capture::packet_listener(stream));
+    info!("Got traffic from {}", peer_addr);
 
+    // Create data dir if not existing
+    let data_dir = PathBuf::from("data");
+    if !data_dir.exists() {
+        std::fs::create_dir(&data_dir)?;
+    }
+
+    // Save to pcap file, data/{ip}.pcap
+    let path = data_dir.join(format!("{}.pcap", peer_addr.ip()));
+    tokio::fs::write(path, pcap).await?;
+
+    Ok(HttpResponse::Ok())
+}
+
+pub async fn listen(address: String, port: u16, security: Security) -> Result<()> {
     info!("Configuring HTTPS certificates");
 
     let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls())?;
@@ -43,6 +50,8 @@ pub async fn server(port: u16, device: DeviceOption, security: Security) -> Resu
 
     info!("Starting shiny-donut server on port {}", port);
 
+    let security = Arc::new(security);
+
     // Create an HTTPs server
     HttpServer::new(move || {
         App::new()
@@ -50,14 +59,14 @@ pub async fn server(port: u16, device: DeviceOption, security: Security) -> Resu
             .wrap(middleware::Compress::default())
             .service(index)
             .app_data(Data::new(security.clone()))
-            .app_data(Data::new(device.clone()))
             .service(
                 web::resource("/traffic")
-                    .route(web::get().to(traffic))
-                    .wrap(HttpAuthentication::basic(auth::validator)),
+                    .route(web::post().to(traffic))
+                    .wrap(HttpAuthentication::basic(auth::validator))
+                    .app_data(PayloadConfig::new(usize::MAX)),
             )
     })
-    .bind_openssl(("0.0.0.0", port), builder)?
+    .bind_openssl((address, port), builder)?
     .run()
     .await?;
 

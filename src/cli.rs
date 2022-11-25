@@ -39,10 +39,6 @@ pub(crate) enum Mode {
         #[clap(short, long, default_value = "0.0.0.0")]
         address: String,
 
-        /// Where to save the pcap
-        #[clap(default_value = "shiny-donut.pcap")]
-        out: String,
-
         #[command(flatten)]
         security: Security,
     },
@@ -51,13 +47,13 @@ pub(crate) enum Mode {
     ListDevices,
 }
 
-#[derive(Parser, PartialEq, Clone)]
+#[derive(Parser, PartialEq, Eq)]
 pub struct DeviceOption {
     /// The device to use to sniff packets
     pub interface: String,
 }
 
-#[derive(Parser, PartialEq)]
+#[derive(Parser, PartialEq, Eq)]
 pub struct Security {
     /// The password to use to authenticate with the server
     #[clap(short, long)]
