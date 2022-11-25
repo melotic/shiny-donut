@@ -1,6 +1,16 @@
-# shiny-donut
+# 🍩 shiny-donut
 
 shiny-donut is a packet capture app that supports streaming packets from a remote system to another device. The main use for this is to send pcaps to another device for other analysis, and Attack & Defend CTFs to monitor traffic.
+
+## Building
+
+Build shiny-donut with the following command:
+
+```bash
+$ cargo build --release
+```
+
+The binary will be available in `target/release/shiny-donut`.
 
 ## Modes
 
